@@ -1,0 +1,19 @@
+name,city mark,creature mark,city,creature
+Natalie,shop,cloud,city cards +1 city energy +2,neighbor any state -1
+Lance,hands,crack,play card without effect,creature energy +3
+Bob,police,pistol,neighbor creature state +1,city knowledge -1
+Richard,route,pistol,optional:action mark +1/+2,equiped -1 creature energy +equiped*1
+Tom,hands,cloud,play card without effect,creature cards -1 creature energy +card*3
+Jayme,hands,claw,play card without effect,creature cards -1 every character(this symbol) state -1
+Carl,police,scratch,neighbor creature state +1,play card
+Maggie,shop,eye,city cards +1 city energy +2,optional:creature knowledge +1 city energy -(knowledge/2)
+Jeremy,route,claw,optional:action mark +1/+2,reverse direction
+Mandi,police,cloud,neighbor creature +1,up to 2 border characters state -1
+Timmy,route,eye,optional:action mark +1/+2,any state +4 character state -2
+Sam,shop,bars,city cards +1 city energy +2,city cards -2 OR city energy -3
+Scott,shop,claw,city cards +1 city energy +2,creature energy +1*n characters state < -1
+Mina,hands,eye,play card without effect,creature cards +1 from used pile
+Julie,route,bars,optional:action mark +1/+2,creature cards +2
+Max,hands,scratch,play card without effect,optional: - neighbor carachter
+Earl,shop,pistol,city cards +1 city energy +2,play character state <-2 effect
+Rodney,police,crack,neighbor creature state +1,city cards -1 (looked through)

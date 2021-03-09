@@ -1,0 +1,8 @@
+name,mark,cost,description
+Struggle,pistol,0,The City loses 1 Energy if able. If it did - you gain 1 Energy.
+Hiding,cloud,1,Place this card on any Character card. If the Activity marker would be placed on this Character - place it on the next Character instead and discard this card.
+Rage,scratch,2,Choose an Equipment card that is in play and remove it from the game.
+Replacement,crack,2,Choose any Character card (except the one with the Activity marker on it) and move it to a different place in the cirle.
+Lurking,claw,2,Draw cards until you have as many as the City.
+Entrapment,bars,3,Choose a Character card in the Creature dimension and shift the Safety marker on it by 1 space.
+Ambush,eye,2,Choose one option: the City discards half its cards from hand (rounded down) OR the City loses hals its Energy (rounded down).

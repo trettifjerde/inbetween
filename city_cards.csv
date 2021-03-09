@@ -1,0 +1,21 @@
+name,equip,mark,cost,description
+Move quickly!,0,hands,4,Imediately perform one extra action.
+Move quickly!,0,hands,4,Imediately perform one extra action.
+Move quickly!,0,hands,4,Imediately perform one extra action.
+Move quickly!,0,hands,4,Imediately perform one extra action.
+Turn back!,0,route,2,Reverse the Direction token.
+Preparations,0,shop,2,Take 2 cards if the Creature has more energy than you do.
+Lock the door,0,route,1,Skip the activity phase this turn.
+Night search,0,police,2,Each player chooses and discards cards from their hand until they have only 2 left.
+Regroup,0,hands,2,The Creature loses 1 card for every HANDS Character in the City dimension.
+Throwing stuff,0,hands,1,The Creature loses 1 Energy cube for every HANDS Character in the City dimension.
+Set up a barricade,0,police,2,Each player keeps 4 Energy cubes and loses the rest.
+Evacuation,0,hands,4,Choose any neighbor of a Secured Character and remove them from the game.
+We need to close this,0,police,1,Each player lowers their awareness by 1 if it's possible.
+Covering your tracks,0,hands,2,The Creature lowers its awareness by 1 if possible.
+Stockroom check,0,shop,3,If half of the SHOP Characters is in the City dimension - choose 1 card from the discard pile and return it in your hand.
+Floor it!,0,route,3,Place the activity marker on any Character card.
+Front page article,0,shop,3,If the most Characters are in the Creature dimension - increase your awareness by 1.
+On the house,0,shop,1,If the Creature has more cards than you do - gain 3 Energy.
+Risky maneuver,0,police,3,Shift the Safety marker on every Guarded Character card to Alert - and every Terrified Character card to Nervous.
+Reroute,0,route,1,Place this card on a Character card. If the Activity marker would be placed on this Character - place it on the next Character instead and discard this card.
