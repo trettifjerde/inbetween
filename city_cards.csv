@@ -19,3 +19,11 @@ Front page article,0,shop,3,If the most Characters are in the Creature dimension
 On the house,0,shop,1,If the Creature has more cards than you do - gain 3 Energy.
 Risky maneuver,0,police,3,Shift the Safety marker on every Guarded Character card to Alert - and every Terrified Character card to Nervous.
 Reroute,0,route,1,Place this card on a Character card. If the Activity marker would be placed on this Character - place it on the next Character instead and discard this card.
+Shotgun,1,route,3,Place this Card on any Character. The Creature cannot use Cards to affect the Character with the Shotgun
+Coupon,1,shop,2,Draw 1 Card each time when you play a Shop Card
+Firehose,1,hands,2,The Creature loses 1 Energy each time you play a Hand Card
+Driving licence,1,route,2,You can flip the Direction token each time you play a Route Card
+Chocolate bars,1,shop,1,You gain 1 Energy if you have less Energy than the Creature when the Action phase begins
+Walkie-talkie,1,police,1,If the Creature plays a Character effect in the Activity phase you can remove Walkie-talkie from the game to cancel the effect
+Revolver,1,police,2,After the Creature has spent energy to activate a Card effect you can remove Revolver from the game to cancel the effect
+Sedative,1,hands,4,The Creature spends 1 more Energy cube to activate Card effects
