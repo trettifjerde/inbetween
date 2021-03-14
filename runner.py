@@ -19,12 +19,13 @@ class Character:
 		}
 		self.perks = {
 			CITY: eval(f"ce.{self.marks[CITY][0]}"),
-			CREATURE: eval(f"ce.{self.name.lower()}"),
+			CREATURE: {
+				"perk": eval(f"ce.{self.name.lower()}"),
+				"condition": eval(f"ce.{self.name.lower()}_check"),
+			}
 		}
 		self.state = 0
-
-	def __repr__(self):
-		return f"{self.name}: {self.state} [{', '.join(self.get_marks())}]"
+		self.card_effects = [None, None]
 
 	def get_marks(self):
 		return [m for marks in self.marks.values() for m in marks]
@@ -36,6 +37,20 @@ class Character:
 	def get_dimension(self):
 		return CITY if self.state > 0 else CREATURE
 
+	def is_card_affected(self):
+		return any(e for e in self.card_effects)
+
+	def __repr__(self):
+		s = f"{self.name}: {self.state} [{', '.join(self.get_marks())}]"
+		if self.is_card_affected():
+			for e in self.card_effects:
+				if e:
+					s += f" ({e})"
+		return s
+
+	def short_info(self):
+		return f"{self.name}: {self.state}"
+
 class Card:
 	def __init__(self, info):
 		if len(info) == 4:
@@ -45,8 +60,9 @@ class Card:
 		elif len(info) == 5:
 			self.name, self.equip, self.mark, self.cost, self.description = info
 
-		if self.name.lower() in ce.equipment:
+		if self.equip:
 			self.perk, self.condition = ce.no_check, ce.no_check
+
 		else:
 			self.perk = eval(f"ce.{self.name.lower().strip('!').translate(ce.ttable)}")
 			try:
@@ -55,7 +71,7 @@ class Card:
 				self.condition = ce.no_check			
 
 	def __repr__(self):
-		return f"{self.name.upper()}: {self.mark} {self.cost}\n\t- {self.description}"
+		return f"{self.name.upper()}: {self.mark} {self.cost}\n- {self.description}"
 
 	def short_info(self):
 		return f"{self.name.upper()}: {self.mark} {self.cost}"
@@ -94,7 +110,7 @@ class Game:
 		self.activity_marker = 0
 		self.player = self.characters[0].state * -1
 
-		self.equiped = [] # list of tuples (Equipment Card, Character or None)
+		self.equiped = []
 
 		self.turn_phases = (
 			("awareness", self.awareness_phase), 
@@ -117,32 +133,61 @@ class Game:
 		self.make_move()
 		return self.winner
 
-	def get_chars(self, mark, state):
-		return [char for char in self.chars_in_state(state) if mark in char.get_marks()]
+	def marked_in_state(self, mark, state):
+		return [char for char in self.in_state(state) if mark in char.get_marks()]
 
-	def chars_in_state(self, state):
+	def in_state(self, state):
 		return [char for char in self.characters if char.state in STATES[state]]
+
+	def get_range_and_print_enumed(self, seq, exc=[], filt=[], short=False):
+		print()
+		chars = True if seq == self.characters else False
+		r = []
+		for n, el in enumerate(seq):
+			# comply with exceptions and filters
+			if n in exc or el in exc:
+				continue
+			if filt and n not in filt and el not in filt:
+				continue
+			# formate the output
+			el_s = el.short_info() if short else str(el)
+			if chars and n == self.activity_marker:
+				el_s = el_s.upper()
+			# do the goal f
+			print(n, el_s)
+			r.append(n)
+		print()
+		return r
 
 	def winner_check(self):
 		if len(self.characters) < 6:
-			self.winner = CITY if (self.chars_in_state('city') > 
-				self.chars_in_state('creature')) else CREATURE
+			self.winner = CITY if (self.in_state('city') > self.in_state('creature')) else CREATURE
 
-		if self.players[CITY]["awareness"] == 6 or len(self.chars_in_state("secured")) == 3:
+		if self.players[CITY]["awareness"] == 6 or len(self.in_state("secured")) == 3:
 			self.winner = CITY
-		elif self.players[CREATURE]["awareness"] == 6 or len(self.chars_in_state("devoured")) == 3:
+		elif self.players[CREATURE]["awareness"] == 6 or len(self.in_state("devoured")) == 3:
 			self.winner = CREATURE
 
 	def is_equiped(self, card_name):
-		for card, n in self.equiped:
+		for card in self.equiped:
 			if card.name.lower() == card_name.lower():
-				return (card, n)
+				return card
 		return False
 
 	def remove_equipment(self, card_name):
 		for n in range(len(self.equiped)):
-			if self.equiped[n][0].name.lower() == card_name.lower():
+			if self.equiped[n].name.lower() == card_name.lower():
+				if card_name.lower() == "shotgun":
+					for char in self.characters:
+						char.card_effects[1] = None
 				return self.equiped.pop(n)
+
+	def shotgunner(self, player):
+		if self.is_equiped("shotgun") and player == CREATURE:
+			for n, char in enumerate(self.characters):
+				if char.card_effects[1]:
+					return n
+		return None
 
 	def print_game(self):
 		print("\nnew turn".upper())
@@ -166,24 +211,12 @@ class Game:
 		print(s + "\n")
 		if self.equiped:
 			print("Equiped:", end=" ")
-			for card, _ in self.equiped:
+			for card in self.equiped:
 				print(card.name.upper(), end=" ")
 			print()
 
 	def print_board(self):
-		print()
-		for n, char in enumerate(self.characters):
-			if self.activity_marker == n:
-				print(n, str(self.characters[n]).upper(), end=" ")
-			else:
-				print(n, self.characters[n], end=" ")
-
-			if n in self.skip_chars:
-				print("(skipped next time)", end=" ")
-			if self.is_equiped("shotgun") and self.is_equiped("shotgun")[1] == n:
-				print("(with the Shotgun)")
-			print()
-		print()
+		self.get_range_and_print_enumed(self.characters)
 
 	def print_cards(self, player=None):
 		if not player:
@@ -191,8 +224,7 @@ class Game:
 
 		print("\nYOUR CARDS:")
 		if self.players[player]["cards"]:
-			for n, card in enumerate(self.players[player]["cards"]):
-				print(f"{n}. {card}")
+			self.get_range_and_print_enumed(self.players[player]["cards"])
 		else:
 			print("no cards")
 
@@ -257,13 +289,11 @@ class Game:
 		if not player:
 			player = self.player
 
-		for n, card in enumerate(self.players[player]["cards"]):
-			print(f"{n} {card.short_info()}")
-		card_n = self.request_int_input("Select card: ", 
-			range(len(self.players[player]['cards'])))
+		r = self.get_range_and_print_enumed(self.players[player]["cards"], short=True)
+		card_n = self.request_int_input("Select card: ", r)
 		card = self.players[player]["cards"].pop(card_n)
 
-		if any(card.mark in char.get_marks() for char in self.chars_in_state("shiftable")):
+		if any(card.mark in char.get_marks() for char in self.in_state("shiftable")):
 			mode = self.request_input("Shift marker of place symbol?", ["m", "s"])
 		else:
 			mode = "s"
@@ -275,22 +305,22 @@ class Game:
 
 		if self.winner:
 			return 
-
-		self.licence_coupon_hose(card, player)
 			
 		if activate:
 			self.activate_card_effect(card, player)
+
+		self.licence_coupon_hose(card, player)
 
 		if not card.equip:
 			self.players[player]["discard"].append(card)
 
 	def shift_marker(self, card, player):
 		print("\nshift marker".upper())
-		r = []
-		for char in self.get_chars(card.mark, "shiftable"):
-			n = self.characters.index(char)
-			r.append(n)
-			print(n, char)
+		exc = []
+		if (gunner := self.shotgunner(player)):
+			exc.append(gunner)
+		r = self.get_range_and_print_enumed(self.characters, 
+				filt=self.marked_in_state(card.mark, "shiftable"), exc=exc)
 		char_n = self.request_int_input("Select character: ", r)
 		self.move_safety_marker(char_n, player)
 
@@ -305,11 +335,10 @@ class Game:
 
 	def place_symbol(self, card, player):
 		print("\nplace symbol".upper())
-		r = []
-		for n, char in enumerate(self.characters):
-			if card.mark not in char.get_marks():
-				r.append(n)
-				print(n, char)
+		exc = [char for char in self.characters if card.mark in char.get_marks()]
+		if (gunner := self.shotgunner(player)):
+			exc.append(gunner)
+		r = self.get_range_and_print_enumed(self.characters, exc=exc)
 		char_n = self.request_int_input("Select character: ", r)
 		for char in self.characters:
 			char.remove_temp_mark(player, card.mark)
@@ -332,26 +361,13 @@ class Game:
 		cost = self.assign_cost(card, player)
 		if self.players[player]["energy"] >= cost and card.condition(self):
 			print(f"\n{card.name.upper()} card's effect:")
-			print(f"{card.description}\nCost: {card.cost}")
-			print(f"Equipment in game: {len(self.equiped)} {'(max)' if len(self.equiped) == 3 else ''}")
+			print(f"{card.description}\nCost: {cost}")
+			if card.equip:
+				print(f"Equipment in game: {len(self.equiped)} {'(max)' if len(self.equiped) == 3 else ''}")
 			confirm = self.request_input("Activate card effect?", ["y", "n"])
 			if confirm == "y":
 				if card.equip:
-					if len(self.equiped) == 3:
-						for n, (eq, char) in enumerate(self.equiped):
-							print(n, eq.name)
-						equip_n = self.request_int_input("What equipment to discard? n: ", 
-							range(len(self.equiped)))
-						discarded_eq = self.equiped[equip_n][0]
-						self.remove_equipment(discarded_eq.name)
-
-					if card.name.lower() == "shotgun":
-						self.print_board()
-						char_n = self.request_int_input("What Character to equip with the Shotgun? n: ",
-							range(len(self.characters)))
-						self.equiped.append((card, char_n))
-					else:
-						self.equiped.append((card, None))
+					self.activate_equipment(card)
 				self.update_energy(player, -cost)
 				self.activate_perk(card, player)
 
@@ -359,6 +375,18 @@ class Game:
 		if self.is_equiped("sedative") and player == CREATURE:
 			return card.cost + 1
 		return card.cost
+
+	def activate_equipment(self, card):
+		if len(self.equiped) == 3:
+			r = self.get_range_and_print_enumed(self.equiped, short=True)
+			n = self.request_int_input("What equipment to remove from game? n: ", r)
+			self.remove_equipment(self.equiped[n].name)
+
+		if card.name.lower() == "shotgun":
+			r = self.get_range_and_print_enumed(self.characters)
+			char_n = self.request_int_input("What Character to equip with the Shotgun? n: ", r)
+			self.characters[char_n].card_effects[1] = card.name
+		self.equiped.append(card)
 
 	def activate_perk(self, card, player):
 		if self.is_equiped("revolver") and player == CREATURE:
@@ -378,7 +406,7 @@ class Game:
 		self.take_cards(self.player, n)
 
 	def rest(self):
-		n = len(self.chars_in_state(PLAYER_NAMES[self.player]))
+		n = len(self.in_state(PLAYER_NAMES[self.player]))
 		self.update_energy(self.player, n)
 
 	def activity_phase(self):
@@ -388,7 +416,6 @@ class Game:
 			print(f"{active_char.name.upper()} is InBetween: nothing happens")
 		else:
 			print(f"{active_char.name.upper()}: {active_char.state}")
-
 			player = active_char.get_dimension()
 			print(f"{PLAYER_NAMES[player].upper()} is now active")
 
@@ -409,10 +436,28 @@ class Game:
 		if abs(char.state) > 2:
 			print(f"\n{char.name.upper()}'s perk:")
 			print(char.perk_description[player])
-			if char.perks[player](self, char):
+
+			if player == CITY:
+				response = char.perks[CITY](self, char)
+			elif player == CREATURE:
+				if response := char.perks[CREATURE]["condition"](self, char):
+					if self.check_walkie():
+						response = False
+					else:
+						response = char.perks[CREATURE]["perk"](self, char)
+			if response:
 				print("Perk activated")
 			else:
 				print("Perk not activated")
+
+	def check_walkie(self):
+		if self.is_equiped("walkie-talkie"):
+			confirm = self.request_input("Discard Walkie-talkie to cancel this Character's effect?", 
+				["y", "n"])
+			if confirm == "y":
+				self.remove_equipment("walkie-talkie")
+				return True
+		return False
 
 	def skip_activity_phase(self):
 		self.phases["activity"] = False
@@ -428,6 +473,7 @@ class Game:
 			self.activity_marker = 0
 		if self.activity_marker in self.skip_chars:
 			self.skip_chars.remove(self.activity_marker)
+			self.characters[self.activity_marker].card_effects[0] = None
 			self.move_activity_marker()
 
 	def reverse_direction(self):
@@ -454,18 +500,14 @@ class Game:
 			self.players[player]["cards"].append(self.players[player]["pile"].pop())
 
 	def lose_cards(self, player, n):
-		if n == len(self.players[player]['cards']):
+		if n >= len(self.players[player]['cards']):
 			while self.players[player]['cards']:
 				self.discard_card(player, 0)
 		else:
 			for _ in range(n):
 				if self.players[player]["cards"]:
-					print()
-					for n, card_info in enumerate(self.players[player]["cards"]):
-						print(n, card_info)
-					print()
-					card_n = self.request_int_input("What card to discard? n: ", 
-						range(len(self.players[player]["cards"])))
+					r = self.get_range_and_print_enumed(self.players[player]["cards"])
+					card_n = self.request_int_input("What card to discard? n: ", r)
 					self.discard_card(player, card_n)
 
 	def discard_card(self, player, card_n):
@@ -475,9 +517,11 @@ class Game:
 
 	def get_card_from_discard(self, player):
 		if self.players[player]["discard"]:
-			for n, card in enumerate(self.players[player]["discard"]):
-				print(n, card)
-			card_n = self.request_int_input("What card to take? ", range(len(self.players[player]["discard"])))
+			r = self.get_range_and_print_enumed(self.players[player]["discard"])
+			if len(r) == 1:
+				card_n = 0
+			else:
+				card_n = self.request_int_input("What card to take? ", r)
 			card = self.players[player]["discard"].pop(card_n)
 			self.players[player]["cards"].append(card)
 		else:
@@ -488,26 +532,22 @@ class Game:
 		self.players[player]["pile"] = self.players[player]["discard"]
 		self.players[player]["discard"] = []
 
-	def get_neighbors(self, char):
-		neighbors = []
+	def get_neighbor_ns(self, char):
 		char_n = self.characters.index(char)
 		neigh_ns = [char_n - 1, char_n + 1]
-		for neigh_n in neigh_ns:
-			if neigh_n < 0:
-				neigh_n = len(self.characters) - 1
-			elif neigh_n >= len(self.characters):
-				neigh_n = 0
-			neighbors.append((neigh_n, self.characters[neigh_n]))
-		return neighbors
+		for n in range(2):
+			if neigh_ns[n] < 0:
+				neigh_ns[n] = len(self.characters) - 1
+			elif neigh_ns[n] >= len(self.characters):
+				neigh_ns[n] = 0
+		return neigh_ns
 
 	def delete_neighbor(self):
 		secured = [char for char in self.characters if char.state in STATES["secured"]]
-		neighbors = [neighbor for secure in secured for neighbor in self.get_neighbors(secure)]
-		for n, neighbor in neighbors:
-			print(n, neighbor)
+		neighbor_ns = [n for secure in secured for n in self.get_neighbor_ns(secure)]
+		r = self.get_range_and_print_enumed(self.characters, filt=neighbor_ns)
 		while True:
-			char_n = self.request_int_input("What neighbor to remove from the game? n: ", 
-				[n for n, _ in neighbors])
+			char_n = self.request_int_input("What neighbor to remove from the game? n: ", r)
 			confirm = self.request_input("Are you sure?", ["y", "n"])
 			if confirm == "y":
 				del self.characters[char_n]
