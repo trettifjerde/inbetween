@@ -52,14 +52,14 @@ def regroup(game):
 	game.lose_cards(CREATURE, chars)
 
 def regroup_check(game):
-	return len(game.marked_in_state("hands", "city"))
+	return len(game.marked_in_state("hands", "city")) and game.players[CREATURE]["cards"]
 
 def throwing_stuff(game):
 	chars = len(game.marked_in_state("hands", "city"))
 	game.update_energy(CREATURE, -chars)
 
 def throwing_stuff_check(game):
-	return len(game.marked_in_state("hands", "city")) and game.players[CREATURE]["energy"] > 0
+	return len(game.marked_in_state("hands", "city")) and game.players[CREATURE]["energy"]
 
 def set_up_a_barricade(game):
 	for player in game.players:
@@ -80,7 +80,7 @@ def we_need_to_close_this(game):
 		game.update_awareness(player, -1)
 
 def we_need_to_close_this_check(game):
-	return game.players[CREATURE]['awareness'] > game.players[CITY]["awareness"]
+	return game.players[CREATURE]['awareness'] >= game.players[CITY]["awareness"]
 
 def floor_it(game):
 	r = game.get_range_and_print_enumed(game.characters, exc=[game.activity_marker])
@@ -92,6 +92,9 @@ def risky_maneuver(game):
 		char.state = 2
 	for char in game.in_state("terrified"):
 		char.state = -2
+
+def risky_maneuver_check(game):
+	return game.in_state("terrified") and len(game.in_state("terrified")) >= len(game.in_state("guarded"))
 
 def covering_your_tracks(game):
 	game.update_awareness(CREATURE, -1)
@@ -182,7 +185,6 @@ def ambush(game):
 	elif len(game.players[CITY]['cards']) in [0, 1]:
 		option = "e"
 	else:
-		game.print_score()
 		option = game.request_input("What should City lose, cards or energy?", ["c", "e"])
 
 	if option == "e":
@@ -207,7 +209,9 @@ def skip_character(game, card_name):
 	print(f"{game.characters[char_n]} (skipped in Activity phase)")
 
 def police(game, char):
-	neighbors = [n for n in game.get_neighbor_ns(char) if game.characters[n].state < 0]
+	neighbors = [n for n in game.get_neighbor_ns(char) 
+	if game.characters[n] in game.in_state("creature") and
+	game.characters[n] in game.in_state("shiftable")]
 	if neighbors:
 		if len(neighbors) > 1:
 			r = game.get_range_and_print_enumed(game.characters, filt=neighbors)
@@ -250,15 +254,10 @@ def bob_check(game, char):
 
 def mandi(game, char):
 	r = game.get_range_and_print_enumed(game.characters, filt=game.in_state("city_border"))
-	if len(r) < 3:
-		for n in r:
-			game.move_safety_marker(n, CREATURE)
-			print(f"Dragged into the Creature dimension: {game.characters[n]}")
-	else:
-		for _ in range(2):
-			n = game.request_int_input("What character to drag into the Creature dimension? n: ", r)
-			game.move_safety_marker(n, CREATURE)
-			r.remove(n)
+	for _ in range(2):
+		n = game.request_int_input("What character to drag into the Creature dimension? n: ", r)
+		game.move_safety_marker(n, CREATURE)
+		r.remove(n)
 	return True
 
 def mandi_check(game, char):
@@ -278,8 +277,8 @@ def carl_check(game, char):
 def rodney(game, char):
 	game.print_cards(CITY)
 	r = game.get_range_and_print_enumed(game.players[CITY]['cards'])
-	card_n = game.request_int_input("What City card to discard? n: ", r)
-	game.discard_card(CITY, card_n)
+	n = game.request_int_input("What City card to discard? n: ", r)
+	game.discard_card(CITY, n)
 	return True
 
 def rodney_check(game, char):
@@ -296,10 +295,7 @@ def timmy_check(game, char):
 
 def richard(game, char):
 	r = game.get_range_and_print_enumed(game.equiped)
-	if len(r) == 1:
-		n = 0
-	else:
-		n = game.request_int_input("What Equipment to remove from the game? n:", r)
+	n = game.request_int_input("What Equipment to remove from the game? n:", r)
 	card = game.remove_equipment(game.equiped[n].name)
 	print(f"{card.name} is unequiped")
 	game.update_energy(CREATURE, card.cost)
@@ -342,10 +338,7 @@ def natalie(game, char):
 	shiftable_neigh_ns = [n for n in game.get_neighbor_ns(char) 
 				if game.characters[n].state in STATES["shiftable"]]
 	r = game.get_range_and_print_enumed(game.characters, filt=shiftable_neigh_ns)
-	if len(r) == 1:
-		n = r[0]
-	else:
-		n = game.request_int_input("Whose Safety marker to shift? n: ", r)
+	n = game.request_int_input("Whose Safety marker to shift? n: ", r)
 	game.move_safety_marker(n, CREATURE)
 	return True
 
@@ -354,7 +347,7 @@ def natalie_check(game, char):
 
 def earl(game, char):
 	minions = [ch for ch in game.characters 
-		if ch.name != char.name and ch.state in [-3, -4, -5] and ch.perks[CREATURE]["condition"]]
+		if ch.name != char.name and ch.state in [-3, -4, -5] and ch.perks[CREATURE]["condition"](game, ch)]
 	char_ns = [game.characters.index(minion) for minion in minions]
 	for char_n, minion in zip(char_ns, minions):
 		print(f"{char_n} {minion.name.upper()}: {minion.perk_description[CREATURE]}")
@@ -370,7 +363,7 @@ def earl(game, char):
 
 def earl_check(game, char):
 	return [ch for ch in game.characters 
-		if ch.state in [-3, -4, -5] and ch.name != char.name and ch.perks[CREATURE]["condition"]]
+		if ch.state in [-3, -4, -5] and ch.name != char.name and ch.perks[CREATURE]["condition"](game, ch)]
 
 def scott(game, char):
 	n = len([ch for ch in game.characters if ch.state < -1])
@@ -418,10 +411,7 @@ def jayme(game, char):
 	r = game.get_range_and_print_enumed(game.players[CREATURE]["cards"], short=True)
 	confirm = game.request_input("Activate this Character's effect?", ["y", "n"])
 	if confirm == "y":
-		if len(r) == 1:
-			n = 0
-		else:
-			n = game.request_int_input("What Card to discard? n: ", r)
+		n = game.request_int_input("What Card to discard? n: ", r)
 		card = game.discard_card(CREATURE, n)
 		chars_marked = game.get_range_and_print_enumed(game.characters, 
 			filt=game.marked_in_state(card.mark, "shiftable"))
@@ -460,5 +450,3 @@ def mina(game, char):
 
 def mina_check(game, char):
 	return game.players[CREATURE]["discard"]
-
-

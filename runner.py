@@ -77,7 +77,7 @@ class Card:
 		return f"{self.name.upper()}: {self.mark} {self.cost}"
 
 class Game:
-	def __init__(self):
+	def __init__(self, characters=10):
 		self.winner = None
 		self.players = {
 			CITY: {
@@ -99,7 +99,7 @@ class Game:
 		for player in self.players:
 			self.take_cards(player, 3)
 
-		self.characters = [Character(info) for info in random.sample(game_data.CHARACTERS, 10)]
+		self.characters = [Character(info) for info in random.sample(game_data.CHARACTERS, characters)]
 		for i in range(len(self.characters)):
 			if i%2 == 0:
 				self.characters[i].state = CITY
@@ -518,10 +518,7 @@ class Game:
 	def get_card_from_discard(self, player):
 		if self.players[player]["discard"]:
 			r = self.get_range_and_print_enumed(self.players[player]["discard"])
-			if len(r) == 1:
-				card_n = 0
-			else:
-				card_n = self.request_int_input("What card to take? ", r)
+			card_n = self.request_int_input("What card to take? ", r)
 			card = self.players[player]["discard"].pop(card_n)
 			self.players[player]["cards"].append(card)
 		else:
