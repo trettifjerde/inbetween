@@ -1,8 +1,5 @@
 name,equip,mark,cost,description
 Move quickly!,0,hands,4,Imediately perform one extra action.
-Move quickly!,0,hands,4,Imediately perform one extra action.
-Move quickly!,0,hands,4,Imediately perform one extra action.
-Move quickly!,0,hands,4,Imediately perform one extra action.
 Turn back!,0,route,2,Reverse the Direction token.
 Preparations,0,shop,2,Take 2 cards if the Creature has more energy than you do.
 Lock the door,0,route,1,Skip the activity phase this turn.

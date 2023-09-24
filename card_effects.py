@@ -1,5 +1,12 @@
 CITY, CREATURE = 1, -1
 PLAYER_NAMES = {1: "city", -1: "creature"}
+PHASE_NAMES = {
+	"1": "i. awareness phase",
+	"2": "ii. action phase",
+	"3": "iii. activity phase", 
+	"4": "iv. movement phase",
+	}
+
 STATES = {
 	"city": (1, 2, 3, 4, 5),
 	"creature": (-1, -2, -3, -4, -5),
